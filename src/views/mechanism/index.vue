@@ -11,7 +11,9 @@
       <el-button type="primary" :icon="Search" @click="initgetMechanism"
         ><i class="iconfont icon-search"></i> 搜索</el-button
       >
-      <el-button type="primary" :icon="Search">添加机构</el-button>
+      <el-button type="primary" :icon="Search" @click="handleDialogValue"
+        >添加机构</el-button
+      >
     </el-row>
     <el-table :data="tableData" stripe style="width: 100%">
       <el-table-column
@@ -49,25 +51,58 @@
         </template>
       </el-table-column>
     </el-table>
+    <el-pagination
+      v-model:current-page="queryForm.pagenum"
+      v-model:page-size="queryForm.pagesize"
+      :page-sizes="[2, 5, 10, 15]"
+      :small="small"
+      :disabled="disabled"
+      :background="background"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="total"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    />
   </el-card>
+  <Dialog v-model="dialogTableVisible" :dialogTitle="dialogTitle"></Dialog>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { options } from './options'
 import { getMechanism } from '@/api/mechanism'
+import Dialog from './component/dialog.vue'
 const tableData = ref([])
 const queryForm = ref({
   query: '',
   pagenum: 1,
   pagesize: 2
 })
-
+const total = ref(0)
 const initgetMechanism = async () => {
   const res = await getMechanism(queryForm.value)
   tableData.value = res.data
+  console.log(res)
+  total.value = res.total
 }
 initgetMechanism()
+
+const handleSizeChange = (pageSize) => {
+  queryForm.value.pagenum = 1
+  queryForm.value.pagesize = pageSize
+  initgetMechanism()
+}
+const handleCurrentChange = (pageNum) => {
+  queryForm.value.pagenum = pageNum
+  initgetMechanism()
+}
+const dialogTableVisible = ref(false)
+
+const handleDialogValue = () => {
+  dialogTitle.value = '添加机构'
+  dialogTableVisible.value = true
+}
+const dialogTitle = ref('')
 </script>
 
 <style lang="scss" scoped>

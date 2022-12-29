@@ -6,3 +6,10 @@ export const getMechanism = (params) => {
     params
   })
 }
+export const addMechansim = (data) => {
+  return axios.request({
+    url: '/api/addMechansim',
+    method: 'post',
+    data
+  })
+}
