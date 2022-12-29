@@ -7,6 +7,8 @@ import SvgIcon from '@/icons'
 import 'element-plus/dist/index.css'
 import '@/router/permission'
 import '@/styles/iconfont.css'
+import changeTime from './utils/changeTime'
 const app = createApp(App)
+changeTime(app)
 SvgIcon(app)
 app.use(store).use(router).mount('#app')

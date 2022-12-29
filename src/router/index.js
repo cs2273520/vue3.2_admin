@@ -8,7 +8,7 @@ const routes = [
   },
   {
     path: '/',
-    name: '/',
+    name: '首页',
     component: () => import('../layout'),
     redirect: '/mechanism',
     children: [
@@ -18,9 +18,9 @@ const routes = [
         component: () => import('@/views/mechanism/index.vue')
       },
       {
-        path: '/mechanism1',
-        name: 'mechanism1',
-        component: () => import('@/views/mechanism1/index.vue')
+        path: '/users',
+        name: 'users',
+        component: () => import('@/views/users/index.vue')
       }
     ]
   }
