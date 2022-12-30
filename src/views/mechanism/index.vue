@@ -11,7 +11,7 @@
       <el-button type="primary" :icon="Search" @click="initgetMechanism"
         ><i class="iconfont icon-search"></i> 搜索</el-button
       >
-      <el-button type="primary" :icon="Search" @click="handleDialogValue"
+      <el-button type="primary" :icon="Search" @click="handleDialogValue()"
         >添加机构</el-button
       >
     </el-row>
@@ -29,23 +29,17 @@
         <template v-slot="{ row }" v-else-if="item.prop === 'auditDate'">
           {{ $filters.changeTime(row.auditDate) }}
         </template>
-        <template #default v-else-if="item.prop === 'action'">
+        <template #default="{ row }" v-else-if="item.prop === 'action'">
           <el-button
             size="small"
             type="success"
             @click="handleCheck(scope.$index, scope.row)"
             >查看</el-button
           >
-          <el-button
-            size="small"
-            type="primary"
-            @click="handleEditor(scope.$index, scope.row)"
+          <el-button size="small" type="primary" @click="handleDialogValue(row)"
             >编辑</el-button
           >
-          <el-button
-            size="small"
-            type="danger"
-            @click="handleDelete(scope.$index, scope.row)"
+          <el-button size="small" type="danger" @click="handleDelete(row)"
             >删除</el-button
           >
         </template>
@@ -62,27 +56,35 @@
       :total="total"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
+      @initmechanism="initgetMechanism"
     />
   </el-card>
-  <Dialog v-model="dialogTableVisible" :dialogTitle="dialogTitle"></Dialog>
+  <Dialog
+    v-model="dialogTableVisible"
+    :dialogTitle="dialogTitle"
+    v-if="dialogTableVisible"
+    :dialogTableValue="dialogTableValue"
+  ></Dialog>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { options } from './options'
-import { getMechanism } from '@/api/mechanism'
+import { getMechanism, checkAuthority, delMechansim } from '@/api/mechanism'
 import Dialog from './component/dialog.vue'
+import { isNull } from '@/utils/filters'
+import { ElMessage, ElMessageBox } from 'element-plus'
 const tableData = ref([])
 const queryForm = ref({
   query: '',
   pagenum: 1,
   pagesize: 2
 })
+const dialogTableValue = ref({})
 const total = ref(0)
 const initgetMechanism = async () => {
   const res = await getMechanism(queryForm.value)
   tableData.value = res.data
-  console.log(res)
   total.value = res.total
 }
 initgetMechanism()
@@ -98,11 +100,57 @@ const handleCurrentChange = (pageNum) => {
 }
 const dialogTableVisible = ref(false)
 
-const handleDialogValue = () => {
-  dialogTitle.value = '添加机构'
+const handleDialogValue = (row) => {
+  if (isNull(row)) {
+    dialogTitle.value = '添加机构'
+    dialogTableValue.value = {
+      name: '',
+      type: '',
+      owner: '',
+      address: '',
+      phone: '',
+      submitDate: new Date().getTime() / 1000,
+      auditDate: 'testTime'
+    }
+  } else {
+    dialogTitle.value = '机构信息修改'
+    dialogTableValue.value = row
+  }
+
   dialogTableVisible.value = true
 }
 const dialogTitle = ref('')
+const handleDelete = async (row) => {
+  ElMessageBox.prompt('请输入权限密码', '提示', {
+    confirmButtonText: '确认',
+    cancelButtonText: '取消',
+    inputErrorMessage: '密码错误'
+  })
+    .then(async ({ value }) => {
+      const res = await checkAuthority(value)
+      if (res.status === 200) {
+        const res1 = await delMechansim(row)
+        if (res1.status === 200) {
+          ElMessage({
+            type: 'success',
+            message: '删除成功'
+          })
+          initgetMechanism()
+        } else {
+          ElMessage({
+            type: 'success',
+            message: '删除失败，稍后重试'
+          })
+        }
+      }
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '操作取消'
+      })
+    })
+}
 </script>
 
 <style lang="scss" scoped>

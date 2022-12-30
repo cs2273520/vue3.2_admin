@@ -7,7 +7,7 @@ import SvgIcon from '@/icons'
 import 'element-plus/dist/index.css'
 import '@/router/permission'
 import '@/styles/iconfont.css'
-import changeTime from './utils/changeTime'
+import changeTime from './utils/filters'
 const app = createApp(App)
 changeTime(app)
 SvgIcon(app)
