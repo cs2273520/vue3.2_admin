@@ -27,14 +27,18 @@
           {{ $filters.changeTime(row.submitDate) }}
         </template>
         <template v-slot="{ row }" v-else-if="item.prop === 'auditDate'">
-          {{ $filters.changeTime(row.auditDate) }}
+          {{
+            $filters.changeTime(row.auditDate)
+              ? '暂未审核'
+              : $filters.changeTime(row.auditDate)
+          }}
         </template>
         <template #default="{ row }" v-else-if="item.prop === 'action'">
           <el-button
             size="small"
             type="success"
             @click="handleCheck(scope.$index, scope.row)"
-            >查看</el-button
+            >审核</el-button
           >
           <el-button size="small" type="primary" @click="handleDialogValue(row)"
             >编辑</el-button
@@ -64,6 +68,7 @@
     :dialogTitle="dialogTitle"
     v-if="dialogTableVisible"
     :dialogTableValue="dialogTableValue"
+    :fetchMethod="initgetMechanism"
   ></Dialog>
 </template>
 
@@ -110,13 +115,13 @@ const handleDialogValue = (row) => {
       address: '',
       phone: '',
       submitDate: new Date().getTime() / 1000,
-      auditDate: 'testTime'
+      auditDate: null
     }
   } else {
     dialogTitle.value = '机构信息修改'
     dialogTableValue.value = row
+    console.log('列表信息', row)
   }
-
   dialogTableVisible.value = true
 }
 const dialogTitle = ref('')

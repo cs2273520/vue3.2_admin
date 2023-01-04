@@ -40,7 +40,7 @@ export const typeoptions = [
     label: '股份制企业'
   },
   {
-    value: '个人独资企业',
-    label: '个人独资企业'
+    value: '个人',
+    label: '个人'
   }
 ]

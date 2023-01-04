@@ -49,6 +49,23 @@
           请上传营业执照+个人身份证
         </div>
       </el-upload>
+      <div class="images">
+        <el-button
+          text
+          @click="showimage1"
+          v-if="props.dialogTitle !== '添加机构'"
+        >
+          证件1
+        </el-button>
+        <el-button
+          text
+          @click="showimage2"
+          v-if="props.dialogTitle !== '添加机构'"
+        >
+          证件2
+        </el-button>
+      </div>
+
       <el-dialog v-model="dialogVisible" class="preImg">
         <img width="100%" :src="dialogImageUrl" alt="" />
       </el-dialog>
@@ -71,11 +88,14 @@ import {
   reactive,
   getCurrentInstance
 } from 'vue'
-// import { addMechansim, editMechansim, uploadImages } from '@/api/mechanism'
-// import { ElMessage } from 'element-plus'
+import { addMechansim, editMechansim } from '@/api/mechanism'
+import { ElMessage } from 'element-plus'
 import { typeoptions } from '../options'
 const uploadImagesUrl = ref('http://localhost:3003/api/uploadImages')
+const loadImageUrl = ref('http://127.0.0.1:3003/data/')
 // const value = ref('')
+const ImagesUrlName = reactive({ name: localStorage.getItem('token') })
+
 const form = ref({
   name: '',
   type: '',
@@ -83,10 +103,11 @@ const form = ref({
   address: '',
   phone: '',
   submitDate: new Date().getTime() / 1000,
-  auditDate: 'testTime'
+  auditDate: 'testTime',
+  image1: '',
+  image2: ''
 })
 
-const ImagesUrlName = reactive({ name: localStorage.getItem('token') })
 const rules = ref({
   name: [{ required: true, message: '请输入机构名字', trigger: 'blur' }],
   type: [{ required: true, message: '请输入机构类型', trigger: 'blur' }],
@@ -108,14 +129,27 @@ const props = defineProps({
   dialogTableValue: {
     type: Object,
     default: () => {}
+  },
+  fetchMethod: {
+    type: Function,
+    default: () => {}
   }
 })
+
+const showimage1 = async () => {
+  dialogVisible.value = true
+  dialogImageUrl.value = loadImageUrl.value + props.dialogTableValue.image1
+}
+const showimage2 = async (dta) => {
+  dialogVisible.value = true
+  dialogImageUrl.value = loadImageUrl.value + props.dialogTableValue.image2
+  // ImagesUrlName.value = props.dialogTableValue.image2
+}
 
 watch(
   () => props.dialogTableValue,
   () => {
     form.value = props.dialogTableValue
-    // console.log('我是表单信息', form.value)
   },
   { deep: true, immediate: true }
 )
@@ -127,51 +161,40 @@ const handelClose = () => {
 
 const { proxy } = getCurrentInstance()
 const handelConfirm = async () => {
-  await proxy.$refs.upload.submit()
-  //   const res = await addMechansim(form.value)
-  //   formRef.value.validate(async (valid) => {
-  //     if (valid) {
-  //       if (props.dialogTitle === '添加机构') {
-  //         const res = await addMechansim(form.value)
-  //         const form1 = new FormData()
-  //         for (let i = 0; i < formdate.length; i++) {
-  //           form1.append('file', formdate[i].raw)
-  //         }
-  //         const res1 = await uploadImages(form1)
-  //         console.log(res1)
-  //         // const res1 = await uploadImages()
-  //         ElMessage({
-  //           message: res.info,
-  //           center: true,
-  //           type: 'success'
-  //         })
-  //       } else {
-  //         const res = await editMechansim(form.value)
-  //         ElMessage({
-  //           message: res.info,
-  //           center: true,
-  //           type: 'success'
-  //         })
-  //       }
-  //       emits('initmechanism')
-  //       handelClose()
-  //     } else {
-  //       console.log('请填写完整内容')
-  //       return false
-  //     }
-  //   })
+  formRef.value.validate(async (valid) => {
+    if (valid) {
+      if (props.dialogTitle === '添加机构') {
+        const uploadfile = proxy.$refs.upload.uploadFiles
+        form.value.image1 = ImagesUrlName.name + uploadfile[0].name
+        form.value.image2 = ImagesUrlName.name + uploadfile[1].name
+        const res = await addMechansim(form.value)
+        if (res.status === 200) {
+          await proxy.$refs.upload.submit()
+        }
+        ElMessage({
+          message: res.info,
+          center: true,
+          type: 'success'
+        })
+        props.fetchMethod()
+      } else {
+        const res = await editMechansim(form.value)
+        ElMessage({
+          message: res.info,
+          center: true,
+          type: 'success'
+        })
+      }
+      emits('initmechanism')
+      handelClose()
+    } else {
+      console.log('请填写完整内容')
+      return false
+    }
+  })
 }
 const formRef = ref(null)
-//  测试数据
-// const form = ref({
-//   name: '湛江养老机构',
-//   type: '个人',
-//   owner: '湛江老板',
-//   address: '广东省湛江市霞山区xxx路xxx号',
-//   phone: '13xxxxxxxx',
-//   submitDate: new Date().getTime() / 1000,
-//   auditDate: 'testTime'
-// })
+
 const fileList = ref([
   //   {
   //     name: 'food.jpeg',
@@ -217,5 +240,12 @@ const handlePreview = (file) => {
     width: 100% !important;
     height: 100% !important;
   }
+}
+.images {
+  display: flex;
+  padding-left: 25px;
+}
+.el-form-item__label-wrap {
+  margin-left: 0px !important;
 }
 </style>
