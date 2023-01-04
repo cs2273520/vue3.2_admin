@@ -14,8 +14,18 @@
       <el-button type="primary" :icon="Search" @click="handleDialogValue()"
         >添加机构</el-button
       >
+      <el-button type="primary" :icon="Search" @click="exportInfo"
+        >导出数据</el-button
+      >
     </el-row>
-    <el-table :data="tableData" stripe style="width: 100%">
+    <el-table
+      :data="tableData"
+      stripe
+      style="width: 100%"
+      ref="multipleTable"
+      @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" width="55"> </el-table-column>
       <el-table-column
         :prop="item.prop"
         :label="item.label"
@@ -73,38 +83,44 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { options } from './options'
+import { reactive, ref } from 'vue'
+import { options, exportInfoTitle } from './options'
 import { getMechanism, checkAuthority, delMechansim } from '@/api/mechanism'
 import Dialog from './component/dialog.vue'
 import { isNull } from '@/utils/filters'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import table2excel from 'js-table2excel'
 const tableData = ref([])
 const queryForm = ref({
   query: '',
   pagenum: 1,
   pagesize: 2
 })
+// 弹出框的列表信息
 const dialogTableValue = ref({})
+// 机构数量
 const total = ref(0)
+// 获取机构数据
 const initgetMechanism = async () => {
   const res = await getMechanism(queryForm.value)
   tableData.value = res.data
   total.value = res.total
 }
 initgetMechanism()
-
+// 改变页数大小
 const handleSizeChange = (pageSize) => {
   queryForm.value.pagenum = 1
   queryForm.value.pagesize = pageSize
   initgetMechanism()
 }
+// 改变当前页
 const handleCurrentChange = (pageNum) => {
   queryForm.value.pagenum = pageNum
   initgetMechanism()
 }
+// 弹出框状态
 const dialogTableVisible = ref(false)
-
+// 修改机构、添加机构
 const handleDialogValue = (row) => {
   if (isNull(row)) {
     dialogTitle.value = '添加机构'
@@ -124,7 +140,9 @@ const handleDialogValue = (row) => {
   }
   dialogTableVisible.value = true
 }
+// 弹出框标题
 const dialogTitle = ref('')
+// 删除机构信息
 const handleDelete = async (row) => {
   ElMessageBox.prompt('请输入权限密码', '提示', {
     confirmButtonText: '确认',
@@ -155,6 +173,16 @@ const handleDelete = async (row) => {
         message: '操作取消'
       })
     })
+}
+// 导出数据
+const exportInfos = reactive([])
+const handleSelectionChange = (selection) => {
+  exportInfos.value = selection
+}
+
+const excelName = '养老机构信息_' + new Date().toLocaleString()
+const exportInfo = () => {
+  table2excel(exportInfoTitle, exportInfos.value, excelName, excelName)
 }
 </script>
 
